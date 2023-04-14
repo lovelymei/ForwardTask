@@ -49,7 +49,7 @@ namespace Forward.Engines
         /// <summary>
         /// индекс (для массива)
         /// </summary>
-        private int index = 0;
+        private int _index = 1;
 
         /// <summary>
         /// Тестовый стенд
@@ -59,7 +59,7 @@ namespace Forward.Engines
         /// <summary>
         /// Свойство для поля index
         /// </summary>
-        private int Index { get => index; set => index = value; }
+        private int Index { get => _index; set => _index = value; }
 
         /// <summary>
         /// Время работы (секунды)
@@ -79,18 +79,30 @@ namespace Forward.Engines
         /// <summary>
         /// Найти скорость охлаждения двигателя
         /// </summary>
-        private double FindVc() => (M[Index] + Hm + Math.Pow(V[Index], 2) + Hv);
+        private double FindVh(double m, double v) => (m* Hm + Math.Pow(v, 2)* Hv);
 
         /// <summary>
         /// Найти скорость нагрева двигателя
         /// </summary>
-        private double FindVh() => (C * (AirTemperature - EngineTemperature));
+        private double FindVc() => (C * (AirTemperature - EngineTemperature));
 
-       /// <summary>
-       /// Симулировать работу двигателя
-       /// </summary>
-       /// <param name="airTemp">Температура воздуха</param>
-       public void Simulate(double airTemp)
+        /// <summary>
+        /// Найти значение M для текуущего V
+        /// </summary>
+        /// <param name="v"> V (скорость коленвала)</param>
+        /// <returns></returns>
+        private double FindM(double v)
+        {
+            double x = (v - V[Index - 1]) / (V[Index] - V[Index - 1]);
+            double m = M[Index - 1] + x * (M[Index] - M[Index - 1]);
+            return m;
+        }
+
+        /// <summary>
+        /// Симулировать работу двигателя
+        /// </summary>
+        /// <param name="airTemp">Температура воздуха</param>
+        public void Simulate(double airTemp)
         {
             //Задание изначальных значений
             isRunning = true;
@@ -100,29 +112,26 @@ namespace Forward.Engines
             EngineTemperature = airTemp;
 
             double v = V[0];
-            double m = M[0];
+            double m = FindM(v);
             double a = m / I;
 
-            
             //Собственно, процесс работы двигателя
             while (isRunning)
             {
                 RunTime++;
                 v += a;
+
                 if (Index < M.Length - 2)
                 {
                     Index += v < M[Index + 1] ? 0 : 1;
                 }
 
-                double up = v - V[Index];
-                double down = V[Index + 1] - V[Index];
-                double factor = M[Index + 1] - M[Index];
-                m = up / down * factor + M[Index];
-                EngineTemperature += FindVc() + FindVh();
+                m = FindM(v);
+
+                EngineTemperature += FindVh(m,v) + FindVc();
                 a = m / I;
                 _testBench.CheckTemperature(this);
             }
-
         }
 
         /// <summary>

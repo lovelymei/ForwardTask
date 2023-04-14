@@ -5,7 +5,7 @@ using System;
 namespace Forward
 {
     internal class Program
-    {
+    {  
         static void Main(string[] args)
         {
              IEngineCreator engineCreator = new EngineCreator();
@@ -17,17 +17,17 @@ namespace Forward
             {
                 Console.WriteLine("Enter the air temperature");
                 temperature = Convert.ToDouble(Console.ReadLine());
+                ITestBench bench = new TestBench();
+                engine.Attach(bench);
+                bench.TurnOnTheEngine(engine, temperature);
+                Console.ReadLine();
             }
             catch (Exception e)
             {
                 Console.Clear();
                 Console.WriteLine(e.Message);
+                Console.ReadLine();
             }
-
-            ITestBench bench = new TestBench();
-            engine.Attach(bench);
-            bench.TurnOnTheEngine(engine, temperature);
-            Console.ReadLine();
         }
     }
 }
